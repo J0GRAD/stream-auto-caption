@@ -2,7 +2,7 @@
 
 Automated script to layer a real time caption overlay over a livestream.
 
-Built with the Web Speech API for near-zero latency. No server, no install, no dependencies — a single HTML file.
+Built with the Web Speech API for near-zero latency. No server, installations, or dependencies required. Minimal single HTML file setup for OBS.
 
 ---
 
@@ -10,23 +10,21 @@ Built with the Web Speech API for near-zero latency. No server, no install, no d
 
 ### 1. Grant microphone access
 
-Open `subtitles.html` in Chrome at least once and allow microphone access when prompted. This only needs to be done once.
+Open `index.html` in Chrome at least once and allow microphone access when prompted. This only needs to be done once.
 
 ### 2. Add to OBS
 
 - In OBS, add a new **Browser Source**
-- Check **Local file** and point it to `subtitles.html`
+- Check **Local file** and point it to `index.html`
 - Check **Allow transparency**
 - Set width/height to match your canvas resolution (e.g. 1920x1080)
-- Position the source over your scene
-
-That's it.
+- Freely position the source over your scene
 
 ---
 
 ## Configuration
 
-All tweakable settings are at the top of `subtitles.html` inside the `CONFIG` block. Do not edit anything below it.
+All tweakable settings are at the top of `index.html` inside the `CONFIG` block. Do not edit anything below it.
 
 | Variable            | Default                                          | Description                                                                 |
 | ------------------- | ------------------------------------------------ | --------------------------------------------------------------------------- |
@@ -46,11 +44,11 @@ All tweakable settings are at the top of `subtitles.html` inside the `CONFIG` bl
 
 ## How it works
 
-- Captions render instantly from interim speech results — display does not wait for a phrase to finalize
+- Captions render instantly from interim speech results; display does not wait for a phrase to finalize
 - When a phrase finalizes, the line clears after `FINAL_CLEAR_DELAY` seconds
 - If a phrase runs long without a natural break, `CHAR_LIMIT` forces a reset
 - If you stop speaking, `INACTIVITY_TIMER` clears the display after the set number of seconds
-- Recognition restarts automatically if it drops — no manual intervention needed
+- Recognition restarts automatically if it drops, no manual intervention needed
 
 ---
 
