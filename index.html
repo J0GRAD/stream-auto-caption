@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Subtitle Overlay</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      background: transparent;
+      overflow: hidden;
+      width: 100vw;
+      height: 100vh;
+    }
+
+    #subtitle {
+      position: fixed;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 90%;
+      text-align: center;
+    }
+  </style>
+</head>
+<body>
+
+  <div id="subtitle"></div>
+
+  <script>
+    // =============================================
+    //  CONFIG — tweak these to your liking
+    // =============================================
+    const CONFIG = {
+      INACTIVITY_TIMER:  3,           // seconds of silence before display clears
+      CHAR_LIMIT:        80,          // character threshold for forced line reset
+      FONT_SIZE:         '36px',      // alter font size
+      FONT_FAMILY:       "'Helvetica Neue', Helvetica, Arial, sans-serif", // font
+      FONT_WEIGHT:       500,         // alter font thickness 
+      TEXT_COLOR:        '#FFD700',   // yellow
+      OUTLINE_COLOR:     '#000000',   // black
+      OUTLINE_WEIGHT:    1.5,         // px — thin outline
+      POSITION_BOTTOM:   '60px',      // offset from bottom of screen
+      LETTER_SPACING:    '0.02em',    // letter spacing
+      FINAL_CLEAR_DELAY: 0,           // seconds after a final result before clearing (0 = instant)
+    };
+    // DO NOT TOUCH BELOW THIS LINE
+    // =============================================
+
+    const caption = document.getElementById('subtitle');
+
+    // Apply config to caption
+    caption.style.fontFamily      = CONFIG.FONT_FAMILY;
+    caption.style.fontSize        = CONFIG.FONT_SIZE;
+    caption.style.fontWeight      = CONFIG.FONT_WEIGHT;
+    caption.style.color           = CONFIG.TEXT_COLOR;
+    caption.style.letterSpacing   = CONFIG.LETTER_SPACING;
+    caption.style.bottom          = CONFIG.POSITION_BOTTOM;
+
+    // Build caption text stroke from OUTLINE_WEIGHT variable
+    const weight = CONFIG.OUTLINE_WEIGHT;
+    const color = CONFIG.OUTLINE_COLOR;
+    caption.style.textShadow = `
+      ${weight}px ${weight}px 0 ${color},
+     -${weight}px -${weight}px 0 ${color},
+      ${weight}px -${weight}px 0 ${color},
+     -${weight}px  ${weight}px 0 ${color},
+      ${weight}px 0 0 ${color},
+     -${weight}px 0 0 ${color},
+      0 ${weight}px 0 ${color},
+      0 -${weight}px 0 ${color}
+    `;
+
+    // =============================================
+    //  State
+    // =============================================
+    let currentLine   = '';
+    let inactivityTimeout = null;
+
+    function clearDisplay() {
+      currentLine     = '';
+      caption.textContent  = '';
+    }
+
+    function resetInactivityTimer() {
+      clearTimeout(inactivityTimeout);
+      inactivityTimeout = setTimeout(clearDisplay, CONFIG.INACTIVITY_TIMER * 1000);
+    }
+
+    function setLine(text) {
+      caption.textContent = text;
+      resetInactivityTimer();
+    }
+
+    // =============================================
+    //  Speech Recognition
+    // =============================================
+    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+
+    if (!SpeechRecognition) {
+      caption.style.color    = '#ff4444';
+      caption.textContent    = 'Speech recognition not supported. Please use Chrome.';
+    } else {
+      const recognition = new SpeechRecognition();
+      recognition.continuous      = true;
+      recognition.interimResults  = true;
+      recognition.lang            = 'en-US';
+
+      recognition.onresult = (event) => {
+        const result      = event.results[event.resultIndex];
+        const transcript  = result[0].transcript;
+
+        if (result.isFinal) {
+          // Hold the text for FINAL_CLEAR_DELAY seconds, then reset
+          setTimeout(() => {
+            currentLine = '';
+            setLine('');
+          }, CONFIG.FINAL_CLEAR_DELAY * 1000);
+        } else {
+          // Check character limit and force reset if exceeded
+          if ((currentLine + transcript).length > CONFIG.CHAR_LIMIT) {
+            currentLine = transcript;
+          }
+          setLine(currentLine + transcript);
+        }
+      };
+
+      recognition.onend = () => {
+        // Restart immediately to keep recognition alive
+        recognition.start();
+      };
+
+      recognition.onerror = (event) => {
+        // Ignore no-speech errors during silence; harmless
+        if (event.error === 'no-speech') return;
+        console.warn('Speech recognition error:', event.error);
+      };
+
+      recognition.start();
+    }
+  </script>
+</body>
+</html>
